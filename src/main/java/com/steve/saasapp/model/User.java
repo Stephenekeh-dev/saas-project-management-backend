@@ -40,6 +40,7 @@ public class User {
 
     @PrePersist
     public void prePersist() {
+
         this.createdAt = LocalDateTime.now();
     }
 }

@@ -38,12 +38,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String email = jwtUtil.extractEmail(token);
 
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // ✅ Retrieve user from DB
+                //  Retrieve user from DB
                 User user = userRepository.findByEmail(email).orElse(null);
 
-                // ✅ Check token validity
+                // Check token validity
                 if (user != null && jwtUtil.isTokenValid(token)) {
-                    // ✅ Wrap user in CustomUserDetails
+                    //  Wrap user in CustomUserDetails
                     CustomUserDetails userDetails = new CustomUserDetails(user);
 
                     UsernamePasswordAuthenticationToken authentication =

@@ -23,14 +23,23 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<User> registerUser(@Valid @RequestBody UserRegistrationRequest request) {
-        User registeredUser = userService.registerUser(request);
-        return ResponseEntity.ok(registeredUser);
+    public ResponseEntity<UserResponseDTO> registerUser(
+            @Valid @RequestBody UserRegistrationRequest request) {
+        User registered = userService.registerUser(request);
+        UserResponseDTO response = new UserResponseDTO(
+                registered.getName(),
+                registered.getEmail(),
+                registered.getRole().toString(),
+                registered.getTenant().getName(),
+                registered.getCreatedAt()
+        );
+        return ResponseEntity.ok(response);
     }
-    @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        User user = userDetails.getUser();
 
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDTO> getCurrentUser(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User user = userDetails.getUser();
         UserResponseDTO response = new UserResponseDTO(
                 user.getName(),
                 user.getEmail(),
@@ -38,8 +47,6 @@ public class UserController {
                 user.getTenant().getName(),
                 user.getCreatedAt()
         );
-
         return ResponseEntity.ok(response);
     }
-
 }

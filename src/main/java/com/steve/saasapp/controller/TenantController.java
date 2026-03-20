@@ -16,6 +16,7 @@ public class TenantController {
 
 
     public TenantController(TenantService tenantService) {
+
         this.tenantService = tenantService;
     }
 
