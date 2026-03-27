@@ -1,4 +1,4 @@
-package com.steve.saasapp.service;
+package com.steve.saasapp.service.impl;
 
 import com.steve.saasapp.dto.ProjectRequestDTO;
 import com.steve.saasapp.dto.ProjectResponseDTO;

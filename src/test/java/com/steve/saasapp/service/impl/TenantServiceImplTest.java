@@ -2,7 +2,6 @@ package com.steve.saasapp.service.impl;
 
 import com.steve.saasapp.model.Tenant;
 import com.steve.saasapp.repository.TenantRepository;
-import com.steve.saasapp.service.TenantServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

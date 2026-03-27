@@ -1,4 +1,4 @@
-package com.steve.saasapp.service;
+package com.steve.saasapp.service.impl;
 
 import com.steve.saasapp.model.Tenant;
 import com.steve.saasapp.repository.TenantRepository;

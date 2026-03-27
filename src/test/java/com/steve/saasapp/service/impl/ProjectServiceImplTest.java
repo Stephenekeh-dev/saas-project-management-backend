@@ -9,7 +9,6 @@ import com.steve.saasapp.model.Project;
 import com.steve.saasapp.model.Tenant;
 import com.steve.saasapp.model.User;
 import com.steve.saasapp.repository.ProjectRepository;
-import com.steve.saasapp.service.ProjectServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -220,7 +219,7 @@ class ProjectServiceImplTest {
         @DisplayName("updates project successfully when user owns it")
         void updateProject_success() {
             when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
-            when(projectRepository.existsByNameAndTenant(any(), any())).thenReturn(false);
+            // removed: existsByNameAndTenant — not called when name is unchanged
             when(projectRepository.save(any())).thenReturn(project);
             when(projectMapper.toResponseDTO(project)).thenReturn(responseDTO);
 

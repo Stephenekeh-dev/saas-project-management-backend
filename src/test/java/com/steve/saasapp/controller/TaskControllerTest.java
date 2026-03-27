@@ -7,18 +7,23 @@ import com.steve.saasapp.exception.ResourceNotFoundException;
 import com.steve.saasapp.model.Tenant;
 import com.steve.saasapp.model.User;
 import com.steve.saasapp.security.CustomUserDetails;
+import com.steve.saasapp.security.JwtAuthenticationFilter;
+import com.steve.saasapp.security.JwtUtil;
 import com.steve.saasapp.service.TaskService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
@@ -35,14 +40,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
 @DisplayName("TaskController")
-@WebMvcTest(TaskController.class)
-@Import(TaskControllerTest.TestSecurityConfig.class)
 class TaskControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
-    @MockitoBean  private TaskService taskService;
+
+    @MockitoBean private TaskService taskService;
+    @MockitoBean private JwtUtil jwtUtil;
+    @MockitoBean private JwtAuthenticationFilter jwtAuthFilter;
 
     private CustomUserDetails userDetails;
     private TaskRequestDTO requestDTO;
@@ -221,14 +230,5 @@ class TaskControllerTest {
                     .andExpect(status().isForbidden());
         }
     }
-    @Configuration
-    static class TestSecurityConfig {
-        @Bean
-        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-            return http
-                    .csrf(csrf -> csrf.disable())
-                    .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-                    .build();
-        }
-    }
+
 }

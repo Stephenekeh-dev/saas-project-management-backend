@@ -5,7 +5,6 @@ import com.steve.saasapp.model.Tenant;
 import com.steve.saasapp.model.User;
 import com.steve.saasapp.repository.UserRepository;
 import com.steve.saasapp.service.TenantService;
-import com.steve.saasapp.service.UserServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

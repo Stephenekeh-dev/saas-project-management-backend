@@ -8,18 +8,23 @@ import com.steve.saasapp.exception.ResourceNotFoundException;
 import com.steve.saasapp.model.Tenant;
 import com.steve.saasapp.model.User;
 import com.steve.saasapp.security.CustomUserDetails;
+import com.steve.saasapp.security.JwtAuthenticationFilter;
+import com.steve.saasapp.security.JwtUtil;
 import com.steve.saasapp.service.ProjectService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -39,14 +44,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
 @DisplayName("ProjectController")
-@WebMvcTest(ProjectController.class)
-@Import(ProjectControllerTest.TestSecurityConfig.class)
 class ProjectControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
-    @MockitoBean  private ProjectService projectService;
+
+    @MockitoBean private ProjectService projectService;
 
     private CustomUserDetails userDetails;
     private ProjectRequestDTO requestDTO;
@@ -262,14 +269,5 @@ class ProjectControllerTest {
                     .andExpect(status().isForbidden());
         }
     }
-    @Configuration
-    static class TestSecurityConfig {
-        @Bean
-        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-            return http
-                    .csrf(csrf -> csrf.disable())
-                    .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-                    .build();
-        }
-    }
+
 }
