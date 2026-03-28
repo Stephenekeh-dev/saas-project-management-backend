@@ -1,7 +1,9 @@
-package com.steve.saasapp.security;
+package com.steve.saasapp.config;
 
+import com.steve.saasapp.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -12,6 +14,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
@@ -25,6 +28,8 @@ public class SecurityConfig {
                                 "/api/tenants/register",
                                 "/api/users/register",
                                 "/api/auth/login",
+                                "/api/auth/refresh",
+                                "/api/auth/logout",
                                 "/actuator/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",

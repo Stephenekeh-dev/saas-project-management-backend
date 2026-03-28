@@ -112,12 +112,12 @@ class ProjectControllerTest {
         }
 
         @Test
-        @DisplayName("returns 401 when no authentication provided")
+        @DisplayName("returns 403 when no authentication provided")
         void createProject_unauthenticated() throws Exception {
             mockMvc.perform(post("/api/projects")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(requestDTO)))
-                    .andExpect(status().isUnauthorized());
+                    .andExpect(status().isForbidden()); // ← change isUnauthorized() to isForbidden()
         }
     }
 
@@ -267,6 +267,88 @@ class ProjectControllerTest {
 
             mockMvc.perform(delete("/api/projects/1").with(user(userDetails)))
                     .andExpect(status().isForbidden());
+        }
+    }
+    @Nested
+    @DisplayName("RBAC — role enforcement")
+    class RbacProjectTests {
+
+        @Test
+        @DisplayName("MEMBER cannot create a project — returns 403")
+        void createProject_memberForbidden() throws Exception {
+            Tenant tenant = Tenant.builder().id(1L).name("Acme Corp").build();
+            User member = User.builder()
+                    .id(2L).name("Bob").email("bob@acme.com")
+                    .tenant(tenant).role(User.Role.MEMBER).build();
+            CustomUserDetails memberDetails = new CustomUserDetails(member);
+
+            mockMvc.perform(post("/api/projects")
+                            .with(user(memberDetails))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(requestDTO)))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("MEMBER cannot delete a project — returns 403")
+        void deleteProject_memberForbidden() throws Exception {
+            Tenant tenant = Tenant.builder().id(1L).name("Acme Corp").build();
+            User member = User.builder()
+                    .id(2L).name("Bob").email("bob@acme.com")
+                    .tenant(tenant).role(User.Role.MEMBER).build();
+            CustomUserDetails memberDetails = new CustomUserDetails(member);
+
+            mockMvc.perform(delete("/api/projects/1")
+                            .with(user(memberDetails)))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("MANAGER cannot delete a project — returns 403")
+        void deleteProject_managerForbidden() throws Exception {
+            Tenant tenant = Tenant.builder().id(1L).name("Acme Corp").build();
+            User manager = User.builder()
+                    .id(3L).name("Carol").email("carol@acme.com")
+                    .tenant(tenant).role(User.Role.MANAGER).build();
+            CustomUserDetails managerDetails = new CustomUserDetails(manager);
+
+            mockMvc.perform(delete("/api/projects/1")
+                            .with(user(managerDetails)))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("MANAGER can create a project — returns 200")
+        void createProject_managerAllowed() throws Exception {
+            Tenant tenant = Tenant.builder().id(1L).name("Acme Corp").build();
+            User manager = User.builder()
+                    .id(3L).name("Carol").email("carol@acme.com")
+                    .tenant(tenant).role(User.Role.MANAGER).build();
+            CustomUserDetails managerDetails = new CustomUserDetails(manager);
+
+            when(projectService.createProject(any(), any())).thenReturn(responseDTO);
+
+            mockMvc.perform(post("/api/projects")
+                            .with(user(managerDetails))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(requestDTO)))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("MEMBER can read projects — returns 200")
+        void getProjects_memberAllowed() throws Exception {
+            Tenant tenant = Tenant.builder().id(1L).name("Acme Corp").build();
+            User member = User.builder()
+                    .id(2L).name("Bob").email("bob@acme.com")
+                    .tenant(tenant).role(User.Role.MEMBER).build();
+            CustomUserDetails memberDetails = new CustomUserDetails(member);
+
+            when(projectService.getProjectsForTenant(any())).thenReturn(List.of(responseDTO));
+
+            mockMvc.perform(get("/api/projects/all")
+                            .with(user(memberDetails)))
+                    .andExpect(status().isOk());
         }
     }
 

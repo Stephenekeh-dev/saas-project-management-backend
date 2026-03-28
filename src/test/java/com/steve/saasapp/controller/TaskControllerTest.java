@@ -39,7 +39,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -50,8 +49,8 @@ class TaskControllerTest {
     @Autowired private ObjectMapper objectMapper;
 
     @MockitoBean private TaskService taskService;
-    @MockitoBean private JwtUtil jwtUtil;
-    @MockitoBean private JwtAuthenticationFilter jwtAuthFilter;
+    // @MockitoBean private JwtUtil jwtUtil;
+    // @MockitoBean private JwtAuthenticationFilter jwtAuthFilter;
 
     private CustomUserDetails userDetails;
     private TaskRequestDTO requestDTO;
@@ -130,12 +129,12 @@ class TaskControllerTest {
         }
 
         @Test
-        @DisplayName("returns 401 when no authentication")
+        @DisplayName("returns 403 when no authentication")
         void createTask_unauthenticated() throws Exception {
             mockMvc.perform(post("/api/projects/1/tasks")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(requestDTO)))
-                    .andExpect(status().isUnauthorized());
+                    .andExpect(status().isForbidden());
         }
     }
 
@@ -228,6 +227,78 @@ class TaskControllerTest {
 
             mockMvc.perform(delete("/api/tasks/1").with(user(userDetails)))
                     .andExpect(status().isForbidden());
+        }
+    }
+    @Nested
+    @DisplayName("RBAC — role enforcement")
+    class RbacTaskTests {
+
+        @Test
+        @DisplayName("MEMBER cannot create a task — returns 403")
+        void createTask_memberForbidden() throws Exception {
+            Tenant tenant = Tenant.builder().id(1L).name("Acme Corp").build();
+            User member = User.builder()
+                    .id(2L).name("Bob").email("bob@acme.com")
+                    .tenant(tenant).role(User.Role.MEMBER).build();
+            CustomUserDetails memberDetails = new CustomUserDetails(member);
+
+            mockMvc.perform(post("/api/projects/1/tasks")
+                            .with(user(memberDetails))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(requestDTO)))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("MEMBER can read tasks — returns 200")
+        void getTasks_memberAllowed() throws Exception {
+            Tenant tenant = Tenant.builder().id(1L).name("Acme Corp").build();
+            User member = User.builder()
+                    .id(2L).name("Bob").email("bob@acme.com")
+                    .tenant(tenant).role(User.Role.MEMBER).build();
+            CustomUserDetails memberDetails = new CustomUserDetails(member);
+
+            when(taskService.getTasksByProject(eq(1L), any())).thenReturn(List.of(responseDTO));
+
+            mockMvc.perform(get("/api/projects/1/tasks")
+                            .with(user(memberDetails)))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("MANAGER can create a task — returns 201")
+        void createTask_managerAllowed() throws Exception {
+            Tenant tenant = Tenant.builder().id(1L).name("Acme Corp").build();
+            User manager = User.builder()
+                    .id(3L).name("Carol").email("carol@acme.com")
+                    .tenant(tenant).role(User.Role.MANAGER).build();
+            CustomUserDetails managerDetails = new CustomUserDetails(manager);
+
+            when(taskService.createTask(eq(1L), any(), any())).thenReturn(responseDTO);
+
+            mockMvc.perform(post("/api/projects/1/tasks")
+                            .with(user(managerDetails))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(requestDTO)))
+                    .andExpect(status().isCreated());
+        }
+
+        @Test
+        @DisplayName("MEMBER can update a task — returns 200")
+        void updateTask_memberAllowed() throws Exception {
+            Tenant tenant = Tenant.builder().id(1L).name("Acme Corp").build();
+            User member = User.builder()
+                    .id(2L).name("Bob").email("bob@acme.com")
+                    .tenant(tenant).role(User.Role.MEMBER).build();
+            CustomUserDetails memberDetails = new CustomUserDetails(member);
+
+            when(taskService.updateTask(eq(1L), any(), any())).thenReturn(responseDTO);
+
+            mockMvc.perform(put("/api/tasks/1")
+                            .with(user(memberDetails))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(requestDTO)))
+                    .andExpect(status().isOk());
         }
     }
 

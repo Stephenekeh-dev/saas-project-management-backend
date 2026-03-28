@@ -1,29 +1,28 @@
 package com.steve.saasapp.service;
 
+import com.steve.saasapp.dto.AuthResponse;
 import com.steve.saasapp.dto.LoginRequest;
-import com.steve.saasapp.dto.LoginResponse;
+import com.steve.saasapp.dto.RefreshTokenRequest;
+import com.steve.saasapp.model.RefreshToken;
 import com.steve.saasapp.model.User;
 import com.steve.saasapp.repository.UserRepository;
 import com.steve.saasapp.security.JwtUtil;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class AuthService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    public LoginResponse login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -31,7 +30,25 @@ public class AuthService {
             throw new RuntimeException("Invalid credentials");
         }
 
-        String token = jwtUtil.generateToken(user.getEmail());
-        return new LoginResponse(token);
+        String accessToken = jwtUtil.generateToken(user.getEmail());
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
+        return new AuthResponse(accessToken, refreshToken.getToken());
+    }
+
+    public AuthResponse refresh(RefreshTokenRequest request) {
+        RefreshToken refreshToken = refreshTokenService.validateRefreshToken(
+                request.getRefreshToken());
+
+        User user = refreshToken.getUser();
+        String newAccessToken = jwtUtil.generateToken(user.getEmail());
+
+        return new AuthResponse(newAccessToken, refreshToken.getToken());
+    }
+
+    public void logout(RefreshTokenRequest request) {
+        RefreshToken refreshToken = refreshTokenService.validateRefreshToken(
+                request.getRefreshToken());
+        refreshTokenService.deleteByUser(refreshToken.getUser());
     }
 }

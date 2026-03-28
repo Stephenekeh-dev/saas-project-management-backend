@@ -8,6 +8,7 @@ import com.steve.saasapp.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,50 +22,39 @@ public class TaskController {
 
     private final TaskService taskService;
 
-
     @PostMapping("/projects/{projectId}/tasks")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<TaskResponseDTO> createTask(
             @PathVariable Long projectId,
             @RequestBody TaskRequestDTO dto,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        User user = userDetails.getUser(); // Now `user.getTenant()` won't throw NPE
-        TaskResponseDTO created = taskService.createTask(projectId, dto, user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(taskService.createTask(projectId, dto, userDetails.getUser()));
     }
 
-
-
     @GetMapping("/projects/{projectId}/tasks")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'MEMBER')")
     public ResponseEntity<List<TaskResponseDTO>> getTasksByProject(
             @PathVariable Long projectId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        User user = userDetails.getUser(); // Extract the User entity from your custom user details
-
-        List<TaskResponseDTO> tasks = taskService.getTasksByProject(projectId, user);
-        return ResponseEntity.ok(tasks);
+        return ResponseEntity.ok(taskService.getTasksByProject(projectId, userDetails.getUser()));
     }
 
-
-
     @PutMapping("/tasks/{taskId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'MEMBER')")
     public ResponseEntity<TaskResponseDTO> updateTask(
             @PathVariable Long taskId,
             @RequestBody TaskRequestDTO taskRequest,
-            @AuthenticationPrincipal CustomUserDetails userDetails
-    ) {
-        User user = userDetails.getUser(); // 🔐 Now you have the authenticated user
-        TaskResponseDTO updatedTask = taskService.updateTask(taskId, taskRequest, user);
-        return ResponseEntity.ok(updatedTask);
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(taskService.updateTask(taskId, taskRequest, userDetails.getUser()));
     }
 
-
     @DeleteMapping("/tasks/{id}")
-    public ResponseEntity<?> deleteTask(@PathVariable Long id,
-                                        @AuthenticationPrincipal CustomUserDetails userDetails) {
-        User user = userDetails.getUser();
-        taskService.deleteTask(id, user);
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<?> deleteTask(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        taskService.deleteTask(id, userDetails.getUser());
         return ResponseEntity.ok(Collections.singletonMap("message", "Task deleted successfully"));
     }
 }
