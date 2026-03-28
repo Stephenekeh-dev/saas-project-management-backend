@@ -1,4 +1,4 @@
-package com.steve.saasapp.config;
+package com.steve.saasapp.security;
 
 import com.steve.saasapp.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
