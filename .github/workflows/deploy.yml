@@ -21,6 +21,8 @@ jobs:
 
       - name: Build JAR
         run: mvn clean package -DskipTests
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME }}
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v22
@@ -31,8 +33,8 @@ jobs:
           environment_name: Saasapp-env
           version_label: ${{ github.sha }}
           region: us-east-1
-          deployment_package: target/saasapp-0.0.1-SNAPSHOT.jar    # just changed
-          wait_for_environment_recovery: 180   # just changed
+          deployment_package: target/saasapp-0.0.1-SNAPSHOT.jar     # just changed
+          wait_for_environment_recovery: 180     # just changed
           #environment_variables:
           #  SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}
           #  SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
