@@ -16,7 +16,7 @@ public class ProjectMapper {
         dto.setEndDate(project.getEndDate());
         dto.setStatus(project.getStatus());
 
-        // ✅ Add the missing fields
+        // Add the missing fields
         if (project.getTenant() != null) {
             dto.setTenantName(project.getTenant().getName());
         }
