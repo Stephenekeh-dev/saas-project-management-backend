@@ -1,0 +1,1 @@
+web: java -jar saasapp-0.0.1-SNAPSHOT.jar
